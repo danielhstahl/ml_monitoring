@@ -8,7 +8,7 @@
 
 ## Open questions
 
-* Choice of language (start with JS for prototyping)
+* Choice of language (start with rust)
 * Do we use Grafana or ELK or just use our own visualization? 
 * If we use our own visualization, what libraries?
 
