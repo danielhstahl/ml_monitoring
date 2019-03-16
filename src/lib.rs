@@ -1,9 +1,6 @@
 use slice_deque::SliceDeque;
 pub struct MonitoringInstructions{
-    num_new_elements:usize,
-    drift_threshold:f64,
-    fp_rate_threshold:f64,
-    fn_rate_threshold:f64 //can combine to get accuracy threshold, specificty threshold, etc
+    num_new_elements:usize
 }
 
 
@@ -30,44 +27,75 @@ impl HoldInputData{
         let result = kolmogorov_smirnov::test_f64(&self.data, original_data, 0.05);
         result.statistic
     }
+    /*fn is_within_threshold(drift_statistic:f64, instructions:&MonitoringInstructions)->bool{
+        drift_statistic<instructions.drift_threshold
+    }*/
 }
+
 
 
 pub struct Outcome<T>{
     predicted:T,
     actual:T
 }
-
-fn convert_bool_to_float(b:bool)->f64{
-    if b { 1.0 } else { 0.0 }
+fn specificity(t_n:f64, f_p:f64)->f64{
+    t_n/(t_n+f_p)
+}
+fn sensitivity(t_p:f64, f_n:f64)->f64{
+    t_p/(t_p+f_n)
+}
+fn precision(t_p:f64, f_p:f64)->f64{
+    t_p/(t_p+f_p)
+}
+fn accuracy(t_p:f64, t_n:f64, f_p:f64, f_n:f64)->f64{
+    (t_p+t_n)/(t_p+t_n+f_p+f_n)
+}
+pub struct ConfusionMatrix{
+    true_positive:usize,
+    true_negative:usize,
+    false_positive:usize,
+    false_negative:usize
+}
+impl ConfusionMatrix{
+    fn create(data:&[Outcome<usize>])-> Self{
+        let true_positive=data.iter().filter(|outcome|{outcome.predicted==outcome.actual&&outcome.predicted==1}).count();
+        let true_negative=data.iter().filter(|outcome|{outcome.predicted==outcome.actual&&outcome.predicted==0}).count();
+        let false_positive=data.iter().filter(|outcome|{outcome.predicted!=outcome.actual&&outcome.predicted==1}).count();
+        let false_negative=data.iter().filter(|outcome|{outcome.predicted!=outcome.actual&&outcome.predicted==0}).count();
+        ConfusionMatrix{
+            true_positive,
+            true_negative,
+            false_negative,
+            false_positive
+        }
+    }
+    fn specificity(&self)->f64{
+        specificity(self.true_negative as f64, self.false_positive as f64)
+    }
+    fn sensitivity(&self)->f64{
+        sensitivity(self.true_positive as f64, self.false_negative as f64)
+    }
+    fn precision(&self)->f64{
+        precision(self.true_positive as f64, self.false_positive as f64)
+    }
+    fn accuracy(&self)->f64{
+        accuracy(self.true_positive as f64, self.true_negative as f64, self.false_positive as f64, self.false_negative as f64)
+    }
 }
 
-fn compute_accuracy(values: &SliceDeque<Outcome<usize>>)->f64{
-    let n=values.len();
-    values.iter().map(|outcome|{((outcome.predicted-outcome.actual) as f64).abs()}).sum::<f64>()/(n as f64)
-}
-//only relevant for binary
-fn compute_fp_rate(values: &SliceDeque<Outcome<usize>>)->f64{
-    let n=values.len();
-    values.iter().map(|outcome|{convert_bool_to_float(outcome.predicted==1 && outcome.actual==0)}).sum::<f64>()/(n as f64)
-}
-//only relevant for binary
-fn compute_fn_rate(values: &SliceDeque<Outcome<usize>>)->f64{
-    let n=values.len();
-    values.iter().map(|outcome|{convert_bool_to_float(outcome.predicted==0 && outcome.actual==1)}).sum::<f64>()/(n as f64)
-}
 fn compute_mse(values: &SliceDeque<Outcome<f64>>)->f64{
     let n=values.len();
     values.iter().map(|outcome|{(outcome.predicted-outcome.actual).powi(2)}).sum::<f64>()/(n as f64)
 }
 
-pub struct HoldoutputdataUsize{
+
+pub struct HoldOutputDataUsize{
     data:SliceDeque<Outcome<usize>>
 }
 
-impl HoldoutputdataUsize{
+impl HoldOutputDataUsize{
     fn new()->Self{
-        HoldoutputdataUsize{
+        HoldOutputDataUsize{
             data:SliceDeque::new()
         }
     }
@@ -75,14 +103,8 @@ impl HoldoutputdataUsize{
         let outcome=Outcome{predicted, actual};
         push_fixed_length(&mut self.data, outcome, instructions.num_new_elements);
     }
-    fn compute_accuracy(&self)->f64{
-        compute_accuracy(&self.data)
-    }
-    fn compute_fn_rate(&self)->f64{
-        compute_fn_rate(&self.data)
-    }
-    fn compute_fp_rate(&self)->f64{
-        compute_fp_rate(&self.data)
+    fn compute_confusion_matrix(&self)->ConfusionMatrix{
+        ConfusionMatrix::create(&self.data)
     }
 }
 pub struct HoldOutputDataF64{
@@ -110,14 +132,12 @@ impl HoldOutputDataF64{
 #[cfg(test)]
 mod tests {
     use super::*;
+    use approx::*;
     #[test]
     fn creates_new_data(){
         let mut x=HoldInputData::new();
         let instructions=MonitoringInstructions{
-            num_new_elements:10,
-            drift_threshold:3.0,
-            fp_rate_threshold:3.0,
-            fn_rate_threshold:3.0
+            num_new_elements:10
         };
         for i in 0..10 {
             x.push(i as f64, &instructions);
@@ -133,10 +153,7 @@ mod tests {
     fn creates_new_data_with_more_data_than_max(){
         let mut x=HoldInputData::new();
         let instructions=MonitoringInstructions{
-            num_new_elements:10,
-            drift_threshold:3.0,
-            fp_rate_threshold:3.0,
-            fn_rate_threshold:3.0
+            num_new_elements:10
         };
         for i in 0..100 {
             x.push(i as f64, &instructions);
@@ -166,42 +183,41 @@ mod tests {
         assert_eq!(data[2], 1.0);
     }
     #[test]
-    fn accuracy_works(){
-        let mut x=HoldoutputdataUsize::new();
-        let instructions=MonitoringInstructions{
-            num_new_elements:10,
-            drift_threshold:3.0,
-            fp_rate_threshold:3.0,
-            fn_rate_threshold:3.0
-        };
-        x.push(1, 0, &instructions);
-        x.push(1, 1, &instructions);
-        assert_eq!(x.compute_accuracy(), 0.5);
+    fn confusion_matrix_works(){
+        let x=vec![
+            Outcome::<usize>{predicted:1, actual:0},
+            Outcome::<usize>{predicted:1, actual:1}
+        ];
+        let cm=ConfusionMatrix::create(&x);
+        assert_eq!(cm.accuracy(), 0.5);
+        assert_eq!(cm.specificity(), 0.0);
+        assert_eq!(cm.sensitivity(), 1.0);
+        assert_eq!(cm.precision(), 0.5);
     }
     #[test]
-    fn compute_fp_rate_works(){
-        let mut x=HoldoutputdataUsize::new();
+    fn hold_output_usize_works(){
+        let mut x=HoldOutputDataUsize::new();
         let instructions=MonitoringInstructions{
-            num_new_elements:10,
-            drift_threshold:3.0,
-            fp_rate_threshold:3.0,
-            fn_rate_threshold:3.0
+            num_new_elements:10
         };
         x.push(1, 0, &instructions);
         x.push(1, 1, &instructions);
-        assert_eq!(x.compute_fp_rate(), 0.5);
+        let cm=x.compute_confusion_matrix();
+        assert_eq!(cm.accuracy(), 0.5);
+        assert_eq!(cm.specificity(), 0.0);
+        assert_eq!(cm.sensitivity(), 1.0);
+        assert_eq!(cm.precision(), 0.5);
     }
     #[test]
-    fn compute_fn_rate_works(){
-        let mut x=HoldoutputdataUsize::new();
+    fn hold_output_f64_works(){
+        let mut x=HoldOutputDataF64::new();
         let instructions=MonitoringInstructions{
-            num_new_elements:10,
-            drift_threshold:3.0,
-            fp_rate_threshold:3.0,
-            fn_rate_threshold:3.0
+            num_new_elements:10
         };
-        x.push(1, 0, &instructions);
-        x.push(1, 1, &instructions);
-        assert_eq!(x.compute_fn_rate(), 0.0);
+        x.push(1.5, 1.2, &instructions);
+        x.push(1.2, 1.6, &instructions);
+        let mse=x.compute_mse();
+        abs_diff_eq!(mse, 0.125, epsilon=0.000001);
+        
     }
 }

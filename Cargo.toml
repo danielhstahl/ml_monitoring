@@ -2,8 +2,16 @@
 name = "ml_monitoring"
 version = "0.1.0"
 authors = ["Daniel Stahl <danstahl1138@gmail.com>"]
+homepage = "https://github.com/phillyfan1138/ml_monitoring"
+repository = "https://github.com/phillyfan1138/ml_monitoring"
+readme = "README.md"
+license = "MIT"
+description = "A library with ml monitoring utilities"
 edition = "2018"
 
 [dependencies]
 kolmogorov_smirnov = "1.1.0"
 slice-deque = "0.1.16"
+
+[dev-dependencies]
+approx = "0.3.1"

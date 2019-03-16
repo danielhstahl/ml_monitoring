@@ -1,0 +1,30 @@
+language: rust
+sudo: required
+rust:
+- stable
+- beta
+- nightly
+addons:
+  apt:
+    packages:
+    - libcurl4-openssl-dev
+    - libelf-dev
+    - libdw-dev
+    - cmake
+    - gcc
+    - binutils-dev
+    - libiberty-dev
+before_cache: |
+  if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
+    RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
+  fi
+after_success: |
+  if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
+    cargo tarpaulin --out Xml
+    bash <(curl -s https://codecov.io/bash)
+    cargo doc
+    cargo publish --token "$CARGO_API" --allow-dirty
+  fi
+env:
+  matrix:
+  - secure: kEG70XUIFTes45r5DO6ARqcTjzNQ/sp94lPD2nRW4brLDAipcJ+rF8F/rvezyn8kpvrRl1Yu6l57a8/bVHDlTJyvbWHfX+xwI3Avma3tukx5chPMZmF3iJl9qWcXyww4zrxSmfm1GNzebEzuA84dhk8eglgMnx+5l062CKPnq+1tVXHtF7NUc6jB7wvZBN92gBgTWPZ0k94FRAqbAvY+pnH9UmKaGLTGXBqdayeFh8CBCyh6863B5/SKGihMBQboAwMr2+NCxPP6pyLJZV0+tWTEdxnVfkvp4rLWV784cgxEq1RWafTesG+04jlW3YHKJ7Oj2m3f3rj8RyEPPWOv9CSUj4FSKcahs5UQJGNfEOvF7kJWRJZ7lxNA79XtMtThJMoPSZAI7RPtr609/pi8pOakHqqsPUHw/49m5lo8O50vYDIjSbh/06RYh0/ATx5cfEZ5c7bBGwHEQh4HefUI6eGJLYOixLo0hxN4qcjhiDhTOc75NkU3bhrYcVny9wZk06TsQtdIZDevPd5WIieazATd2pMnlLjYIIWbsPQFoudYhx02iLt135h3VvdEGh/bzDk1udm35WfZ4HyVPz/rtZNtI3tNoxE4VzyQZ5TlSZ4I7gyYmf+WtorPrL+tq5bNBzRkPZfua/kQ9ZIA2OQ6YO0kOgohVYfepdcFTZa228Y=
