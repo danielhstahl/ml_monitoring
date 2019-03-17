@@ -1,0 +1,25 @@
+{
+  "name": "ml_monitoring",
+  "version": "1.0.0",
+  "description": "* Drift monitoring  * Accuracy (and confusion matrix) monitoring  * Extensibility (custom functions for monitoring) * Stateless * Able to be used in AWS Lambda, Containers, etc",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phillyfan1138/ml_monitoring.git"
+  },
+  "author": "Daniel Stahl",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/phillyfan1138/ml_monitoring/issues"
+  },
+  "homepage": "https://github.com/phillyfan1138/ml_monitoring#readme",
+  "dependencies": {
+    "jerzy": "^0.2.1"
+  },
+  "devDependencies": {
+    "jest": "^24.5.0"
+  }
+}
