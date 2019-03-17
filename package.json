@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/phillyfan1138/ml_monitoring#readme",
   "dependencies": {
+    "fastify": "^2.1.0",
     "jerzy": "^0.2.1"
   },
   "devDependencies": {

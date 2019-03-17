@@ -1,4 +1,5 @@
 const {
+    computeDrift,
     createInitialInputMetrics,
     updateInputMetrics,
     generateConfusionMatrix, //for testing
@@ -6,7 +7,29 @@ const {
     sensitivity,
     precision,
     accuracy,
+    getDriftForEachVariable,
 }=require('../js/metrics')
+describe('computeDrift', ()=>{
+    it('returns a number', ()=>{
+        const x=[1, 2, 3, 4, 5, 6, 7]
+        const y=[1, 2, 3, 4, 5, 6, 8]
+        expect(computeDrift(x, y)).toBeDefined()
+    })
+})
+describe('getDriftForEachVariable', ()=>{
+    it('gets number for each attribute', ()=>{
+        const inputArray=[{hello:5, goodbye:3}]
+        const result=createInitialInputMetrics(inputArray, 5)
+        const keys=["hello", "goodbye"]
+        let result2=updateInputMetrics(keys, result, inputArray, 5)
+        result2=updateInputMetrics(keys, result2, inputArray, 5)
+        result2=updateInputMetrics(keys, result2, inputArray, 5)
+        result2=updateInputMetrics(keys, result2, inputArray, 5)
+        const result3=getDriftForEachVariable(result2, [3, 4, 5, 6, 6, 7, 8, 9])
+        expect(result3.hello).toBeDefined()
+        expect(result3.goodbye).toBeDefined()
+    })
+})
 describe('createInitialInputMetrics', ()=>{
     it('returns array of numbers based on keys with single element', ()=>{
         const inputArray=[{hello:5, goodbye:3}]

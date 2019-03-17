@@ -9,8 +9,8 @@ const pushFixedLength=(data, newElement, maxSize)=>{
 
 //yArray can be a "reprenstation" of the data if the original data is too big
 const computeDrift=(xArray, yArray)=>{
-    const x=jerzy.Vector(xArray)
-    const y=jerzy.Vector(yArray)
+    const x=new jerzy.Vector(xArray)
+    const y= new jerzy.Vector(yArray)
     const ks=new jerzy.Nonparametric.kolmogorovSmirnov(x, y)
     return ks.ks
 }
@@ -56,9 +56,6 @@ const getKeys=inputArray=>{
 }
 
 const createInitialInputMetrics=(inputArray, maxSize)=>{
-    if(!Array.isArray(inputArray)||inputArray.length===0){
-        throw new Error('Needs array with at least one element')
-    }
     const keys=getKeys(inputArray)
     const [init, ...rest]=inputArray
     const initInputMetric=keys.reduce((aggr, key)=>({
@@ -68,9 +65,17 @@ const createInitialInputMetrics=(inputArray, maxSize)=>{
     return updateInputMetrics(keys, initInputMetric, rest, maxSize)
 }
 
+const getDriftForEachVariable=(inputMetrics, originalValues)=>Object.entries(inputMetrics)
+    .reduce((aggr, [key, values])=>({
+        ...aggr,
+        [key]:computeDrift(values, originalValues)
+    }), {})
 
 module.exports={
     createInitialInputMetrics,
+    getDriftForEachVariable,
+    computeDrift, //for testing
+    getKeys,
     updateInputMetrics,
     generateConfusionMatrix, //for testing
     pushFixedLength, //for testing
