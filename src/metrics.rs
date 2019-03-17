@@ -15,15 +15,15 @@ pub struct HoldInputData{
     data:SliceDeque<f64>
 }
 impl HoldInputData{
-    fn new()->Self{
+    pub fn new()->Self{
         HoldInputData{
             data:SliceDeque::new()
         }
     }
-    fn push(&mut self, new_element:f64, instructions:&MonitoringInstructions){
+    pub fn push(&mut self, new_element:f64, instructions:&MonitoringInstructions){
         push_fixed_length(&mut self.data, new_element, instructions.num_new_elements);
     }
-    fn compute_drift(&self, original_data:&[f64])->f64{
+    pub fn compute_drift(&self, original_data:&[f64])->f64{
         let result = kolmogorov_smirnov::test_f64(&self.data, original_data, 0.05);
         result.statistic
     }
@@ -57,11 +57,11 @@ pub struct ConfusionMatrix{
     false_negative:usize
 }
 impl ConfusionMatrix{
-    fn create(data:&[Outcome<usize>])-> Self{
+    pub fn create(data:&[Outcome<usize>])-> Self{
         let true_positive=data.iter().filter(|outcome|{outcome.predicted==outcome.actual&&outcome.predicted==1}).count();
         let true_negative=data.iter().filter(|outcome|{outcome.predicted==outcome.actual&&outcome.predicted==0}).count();
         let false_positive=data.iter().filter(|outcome|{outcome.predicted!=outcome.actual&&outcome.predicted==1}).count();
-        let false_negative=data.iter().filter(|outcome|{outcome.predicted!=outcome.actual&&outcome.predicted==0}).count();
+        let false_negative=data.iter().filter(|outcome|{outcome.predicted!=outcome.actual&&outcome.actual==1}).count();
         ConfusionMatrix{
             true_positive,
             true_negative,
@@ -69,16 +69,16 @@ impl ConfusionMatrix{
             false_positive
         }
     }
-    fn specificity(&self)->f64{
+    pub fn specificity(&self)->f64{
         specificity(self.true_negative as f64, self.false_positive as f64)
     }
-    fn sensitivity(&self)->f64{
+    pub fn sensitivity(&self)->f64{
         sensitivity(self.true_positive as f64, self.false_negative as f64)
     }
-    fn precision(&self)->f64{
+    pub fn precision(&self)->f64{
         precision(self.true_positive as f64, self.false_positive as f64)
     }
-    fn accuracy(&self)->f64{
+    pub fn accuracy(&self)->f64{
         accuracy(self.true_positive as f64, self.true_negative as f64, self.false_positive as f64, self.false_negative as f64)
     }
 }
@@ -94,16 +94,16 @@ pub struct HoldOutputDataUsize{
 }
 
 impl HoldOutputDataUsize{
-    fn new()->Self{
+    pub fn new()->Self{
         HoldOutputDataUsize{
             data:SliceDeque::new()
         }
     }
-    fn push(&mut self, predicted:usize, actual:usize, instructions:&MonitoringInstructions){
+    pub fn push(&mut self, predicted:usize, actual:usize, instructions:&MonitoringInstructions){
         let outcome=Outcome{predicted, actual};
         push_fixed_length(&mut self.data, outcome, instructions.num_new_elements);
     }
-    fn compute_confusion_matrix(&self)->ConfusionMatrix{
+    pub fn compute_confusion_matrix(&self)->ConfusionMatrix{
         ConfusionMatrix::create(&self.data)
     }
 }
@@ -112,16 +112,16 @@ pub struct HoldOutputDataF64{
 }
 
 impl HoldOutputDataF64{
-    fn new()->Self{
+    pub fn new()->Self{
         HoldOutputDataF64{
             data:SliceDeque::new()
         }
     }
-    fn push(&mut self, predicted:f64, actual:f64, instructions:&MonitoringInstructions){
+    pub fn push(&mut self, predicted:f64, actual:f64, instructions:&MonitoringInstructions){
         let outcome=Outcome{predicted, actual};
         push_fixed_length(&mut self.data, outcome, instructions.num_new_elements);
     }
-    fn compute_mse(&self)->f64{
+    pub fn compute_mse(&self)->f64{
         compute_mse(&self.data)
     }
 }
