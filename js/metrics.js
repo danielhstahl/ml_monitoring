@@ -38,10 +38,14 @@ const generateConfusionMatrix=newElements=>newElements
     }, {tp:0, tn:0, fp:0, fn:0})
 
 
-const updateInputMetrics=(keys, initInputMetric, inputArray, maxSize)=>{
+const updateInputMetrics=(keys, initInputMetric, inputArray, originalInputArray, maxSize)=>{
     inputArray.forEach(input=>{
         keys.forEach(key=>{
-            initInputMetric[key]=pushFixedLength(initInputMetric[key], input[key], maxSize)
+            const data=pushFixedLength(initInputMetric[key], input[key], maxSize)
+            initInputMetric[key]={
+                data,
+                drift:computeDrift(data, originalInputArray)
+            }
         })
     })
     return initInputMetric
@@ -55,25 +59,29 @@ const getKeys=inputArray=>{
     return Object.keys(init)
 }
 
-const createInitialInputMetrics=(inputArray, maxSize)=>{
+//need to fix!!
+
+const createInitialInputMetrics=(inputArray, originalInputArray, maxSize)=>{
     const keys=getKeys(inputArray)
     const [init, ...rest]=inputArray
-    const initInputMetric=keys.reduce((aggr, key)=>({
+    const initInputMetric=keys.reduce((aggr, key)=>{
+        const data=[init[key]]
+        return {
         ...aggr,
-        [key]:[init[key]]
-    }), {})
-    return updateInputMetrics(keys, initInputMetric, rest, maxSize)
+        [key]:{data, drift:computeDrift(data, originalInputArray)}
+    }}, {})
+    return updateInputMetrics(keys, initInputMetric, rest, originalInputArray, maxSize)
 }
 
-const getDriftForEachVariable=(inputMetrics, originalValues)=>Object.entries(inputMetrics)
+/*const getDriftForEachVariable=(inputMetrics, originalValues)=>Object.entries(inputMetrics)
     .reduce((aggr, [key, values])=>({
         ...aggr,
         [key]:computeDrift(values, originalValues)
     }), {})
-
+*/
 module.exports={
     createInitialInputMetrics,
-    getDriftForEachVariable,
+    //getDriftForEachVariable,
     computeDrift, //for testing
     getKeys,
     updateInputMetrics,

@@ -7,7 +7,7 @@ const {
     sensitivity,
     precision,
     accuracy,
-    getDriftForEachVariable,
+    //getDriftForEachVariable,
 }=require('../js/metrics')
 describe('computeDrift', ()=>{
     it('returns a number', ()=>{
@@ -15,7 +15,7 @@ describe('computeDrift', ()=>{
         const y=[1, 2, 3, 4, 5, 6, 8]
         expect(computeDrift(x, y)).toBeDefined()
     })
-})
+})/*
 describe('getDriftForEachVariable', ()=>{
     it('gets number for each attribute', ()=>{
         const inputArray=[{hello:5, goodbye:3}]
@@ -29,17 +29,17 @@ describe('getDriftForEachVariable', ()=>{
         expect(result3.hello).toBeDefined()
         expect(result3.goodbye).toBeDefined()
     })
-})
+})*/
 describe('createInitialInputMetrics', ()=>{
     it('returns array of numbers based on keys with single element', ()=>{
         const inputArray=[{hello:5, goodbye:3}]
         const result=createInitialInputMetrics(inputArray, 5)
-        expect(result).toEqual({hello:[5], goodbye:[3]})
+        expect(result).toEqual({hello:{data:[5], drift:0.3}, goodbye:{data:[3], drift:0.4}})
     })
     it('returns array of numbers based on keys with multipe elements', ()=>{
         const inputArray=[{hello:5, goodbye:3},{hello:3, goodbye:5}]
         const result=createInitialInputMetrics(inputArray, 5)
-        expect(result).toEqual({hello:[5, 3], goodbye:[3, 5]})
+        expect(result).toEqual({hello:{data:[5, 3], drift:0.3}, goodbye:{data:[3, 5], drift:0.3}})
     })
     it('errors with array with no elements', ()=>{
         const inputArray=[]
@@ -52,7 +52,7 @@ describe('updateInputMetrics', ()=>{
         const result=createInitialInputMetrics(inputArray, 5)
         const keys=["hello", "goodbye"]
         const result2=updateInputMetrics(keys, result, inputArray, 5)
-        expect(result2).toEqual({hello:[5, 5], goodbye:[3, 3]})
+        expect(result2).toEqual({hello:{data:[5, 5], drift:0.3}, goodbye:{data:[3, 3], drift:0.4}})
     })
 })
 describe('generateConfusionMatrix', ()=>{

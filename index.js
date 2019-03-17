@@ -9,8 +9,7 @@ const fastify = require('fastify')({
     logger: true
 })
 const HISTORY_TO_KEEP=100
-let inputData
-let inputMetrics
+let inputMetrics //because global variables jst lying around are a good idea :|
 
 const makeArrayIfNotArray=objOrArray=>Array.isArray(objOrArray)?objOrArray:[objOrArray]
 // Declare a route
@@ -21,15 +20,18 @@ fastify.get('/', (request, reply) => {
 fastify.post('/input', (request, reply)=>{
     const {inputValues, originalValues}=request.body
     const values=makeArrayIfNotArray(inputValues)
-    if(inputData){
+    if(inputMetrics){
         const keys=getKeys(values)
-        inputData=updateInputMetrics(keys, inputData, values, HISTORY_TO_KEEP)
+        inputMetrics=updateInputMetrics(keys, inputMetrics, values, HISTORY_TO_KEEP)
     }
     else {
-        inputData=createInitialInputMetrics(values, HISTORY_TO_KEEP)
+        inputMetrics=createInitialInputMetrics(values, HISTORY_TO_KEEP)
     }
-    inputMetrics=getDriftForEachVariable(inputData, originalValues)
     reply.send({success:true})
+})
+
+fastify.get('/input', (request, reply)=>{
+    reply.send({inputMetrics})
 })
 
 
